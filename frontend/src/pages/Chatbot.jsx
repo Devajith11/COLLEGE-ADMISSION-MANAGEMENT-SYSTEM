@@ -26,7 +26,7 @@ const Chatbot = () => {
         setIsTyping(true);
 
         try {
-            const res = await api.post('/api/chatbot/query', { query: input });
+            const res = await api.post('/chatbot/query', { query: input });
             setMessages(prev => [...prev, { text: res.data.answer, sender: 'bot' }]);
         } catch (err) {
             setMessages(prev => [...prev, { text: "I'm having trouble connecting. Please try again later.", sender: 'bot' }]);

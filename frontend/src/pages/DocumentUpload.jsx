@@ -25,7 +25,7 @@ const DocumentUpload = () => {
     React.useEffect(() => {
         const fetchDocs = async () => {
             try {
-                const res = await api.get('/api/student/profile');
+                const res = await api.get('/student/profile');
                 if (res.data.documents) {
                     const statusUpdate = { ...uploadStatus };
                     const fileUpdate = { ...files };
@@ -66,7 +66,7 @@ const DocumentUpload = () => {
         formData.append('name', docList.find(d => d.id === id).name);
 
         try {
-            await api.post('/api/student/upload', formData, {
+            await api.post('/student/upload', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }

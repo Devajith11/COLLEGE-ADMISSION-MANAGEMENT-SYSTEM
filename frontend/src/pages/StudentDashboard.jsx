@@ -17,7 +17,7 @@ const StudentDashboard = () => {
             }
 
             try {
-                const res = await api.get('/api/student/profile');
+                const res = await api.get('/student/profile');
                 setStudent(res.data);
             } catch (err) {
                 console.error('Fetch error:', err);

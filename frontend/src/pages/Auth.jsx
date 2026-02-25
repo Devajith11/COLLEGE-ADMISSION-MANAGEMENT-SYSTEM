@@ -19,10 +19,10 @@ const Auth = ({ isRegister, isAdmin }) => {
             let payload = {};
 
             if (isAdmin) {
-                endpoint = '/api/auth/admin/login';
+                endpoint = '/auth/admin/login';
                 payload = { username: formData.username, password: formData.password };
             } else {
-                endpoint = isRegister ? '/api/auth/register' : '/api/auth/login';
+                endpoint = isRegister ? '/auth/register' : '/auth/login';
                 payload = { keamAppNumber: formData.keamAppNumber, password: formData.password };
             }
 
@@ -46,7 +46,7 @@ const Auth = ({ isRegister, isAdmin }) => {
         } catch (err) {
             console.error('Auth Error:', err);
             if (!err.response) {
-                setError('Cannot connect to server. Please ensure the backend is running.');
+                setError(`Cannot connect to server at ${api.defaults.baseURL}. Please ensure the backend is running and CORS is allowed.`);
             } else {
                 setError(err.response.data?.message || 'Authentication failed. Please check your credentials.');
             }

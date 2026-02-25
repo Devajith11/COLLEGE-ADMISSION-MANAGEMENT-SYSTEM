@@ -17,7 +17,7 @@ const AdminDashboard = () => {
     const fetchStudents = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/api/admin/students');
+            const res = await api.get('/admin/students');
             setStudents(res.data);
             setError(null);
         } catch (err) {
@@ -34,7 +34,7 @@ const AdminDashboard = () => {
 
     const handleVerifyStatus = async (studentId, status) => {
         try {
-            await api.post('/api/admin/update-status', { studentId, status });
+            await api.post('/admin/update-status', { studentId, status });
             fetchStudents();
             setSelectedStudent(null);
         } catch (err) {
@@ -44,7 +44,7 @@ const AdminDashboard = () => {
 
     const handleVerifyDoc = async (studentId, documentId, status) => {
         try {
-            await api.post('/api/admin/verify', {
+            await api.post('/admin/verify', {
                 studentId,
                 documentId,
                 status,
@@ -73,7 +73,7 @@ const AdminDashboard = () => {
 
     const handleSendRemarks = async () => {
         try {
-            await api.post('/api/admin/update-remarks', {
+            await api.post('/admin/update-remarks', {
                 studentId: selectedStudent._id,
                 adminRemarks: remarks
             });
@@ -461,7 +461,7 @@ const AdminDashboard = () => {
                                                 <div className="w-full mb-4 flex justify-between items-center px-2">
                                                     <span className="text-xs font-bold text-gray-500 uppercase">File: {selectedStudent.documents[selectedDocIndex].name}</span>
                                                     <a
-                                                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}${selectedStudent.documents[selectedDocIndex].url}`}
+                                                        href={`${import.meta.env.VITE_API_URL || 'https://college-admission-management-system.onrender.com'}${selectedStudent.documents[selectedDocIndex].url}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="text-xs text-primary font-bold hover:underline flex items-center gap-1"
@@ -473,7 +473,7 @@ const AdminDashboard = () => {
                                                 <div className="w-full max-w-2xl bg-white dark:bg-[#1e2532] shadow-2xl rounded-lg p-2 min-h-[600px] flex items-center justify-center border border-gray-200 dark:border-gray-800 mb-6 overflow-hidden">
                                                     {selectedStudent.documents[selectedDocIndex].url.toLowerCase().endsWith('.pdf') ? (
                                                         <iframe
-                                                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}${selectedStudent.documents[selectedDocIndex].url}#toolbar=0`}
+                                                            src={`${import.meta.env.VITE_API_URL || 'https://college-admission-management-system.onrender.com'}${selectedStudent.documents[selectedDocIndex].url}#toolbar=0`}
                                                             width="100%"
                                                             height="600px"
                                                             className="rounded border-none"
@@ -481,12 +481,12 @@ const AdminDashboard = () => {
                                                         />
                                                     ) : (
                                                         <img
-                                                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}${selectedStudent.documents[selectedDocIndex].url}`}
+                                                            src={`${import.meta.env.VITE_API_URL || 'https://college-admission-management-system.onrender.com'}${selectedStudent.documents[selectedDocIndex].url}`}
                                                             alt="Document Preview"
                                                             className="max-w-full h-auto rounded"
-                                                            onLoad={() => console.log("Loaded:", `${import.meta.env.VITE_API_URL || 'http://localhost:5001'}${selectedStudent.documents[selectedDocIndex].url}`)}
+                                                            onLoad={() => console.log("Loaded:", `${import.meta.env.VITE_API_URL || 'https://college-admission-management-system.onrender.com'}${selectedStudent.documents[selectedDocIndex].url}`)}
                                                             onError={(e) => {
-                                                                console.error("Image load failed for URL:", `${import.meta.env.VITE_API_URL || 'http://localhost:5001'}${selectedStudent.documents[selectedDocIndex].url}`);
+                                                                console.error("Image load failed for URL:", `${import.meta.env.VITE_API_URL || 'https://college-admission-management-system.onrender.com'}${selectedStudent.documents[selectedDocIndex].url}`);
                                                                 e.target.src = "https://placehold.co/600x400?text=Image+Not+Found+on+Server";
                                                             }}
                                                         />

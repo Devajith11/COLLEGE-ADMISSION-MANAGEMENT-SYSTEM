@@ -1,38 +1,22 @@
-const express = require('express');
-const router = express.Router();
-const KnowledgeBase = require('../models/KnowledgeBase');
 
-router.post('/query', async (req, res) => {
-    const { query } = req.body;
-    if (!query) return res.status(400).json({ message: 'Query is required' });
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+const path = require('path');
+const KnowledgeBase = require('./backend/models/KnowledgeBase');
 
-    const lowerQuery = query.toLowerCase();
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, 'backend', '.env') });
 
+const connectDB = async () => {
     try {
-        // Simple keyword matching logic
-        const knowledge = await KnowledgeBase.find();
-        let bestMatch = null;
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log('MongoDB Connected');
 
-        for (const item of knowledge) {
-            if (item.keywords.some(kw => lowerQuery.includes(kw))) {
-                bestMatch = item;
-                break;
-            }
-        }
+        // Clear existing knowledge base
+        await KnowledgeBase.deleteMany({});
+        console.log('Cleared existing knowledge base');
 
-        if (bestMatch) {
-            res.json({ answer: bestMatch.answer });
-        } else {
-            res.json({ answer: "I'm not sure about that. Please contact the college office at 04935-257321 for more info." });
-        }
-    } catch (err) {
-        res.status(500).json({ message: 'Chatbot error' });
-    }
-});
-
-// Seed Knowledge Base
-router.post('/seed', async (req, res) => {
-    try {
+        // Correct seed data
         const seedData = [
             {
                 keywords: ['keam', 'application', 'apply'],
@@ -57,10 +41,13 @@ router.post('/seed', async (req, res) => {
         ];
 
         await KnowledgeBase.insertMany(seedData);
-        res.json({ message: 'Knowledge base seeded' });
-    } catch (err) {
-        res.status(500).json({ message: 'Seed failed', error: err.message });
-    }
-});
+        console.log('Knowledge base seeded correctly');
 
-module.exports = router;
+        process.exit();
+    } catch (err) {
+        console.error('Error:', err);
+        process.exit(1);
+    }
+};
+
+connectDB();

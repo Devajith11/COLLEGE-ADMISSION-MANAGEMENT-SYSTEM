@@ -43,7 +43,7 @@ const AdmissionForm = () => {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const res = await api.get('/api/student/profile');
+                const res = await api.get('/student/profile');
 
                 if (res.data.personalDetails) {
                     setFormData(prev => ({
@@ -116,7 +116,7 @@ const AdmissionForm = () => {
                 branch: formData.branch
             };
 
-            await api.put('/api/student/update', payload);
+            await api.put('/student/update', payload);
 
             navigate('/upload');
         } catch (err) {
