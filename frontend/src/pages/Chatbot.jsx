@@ -11,7 +11,7 @@ const Chatbot = () => {
     const [input, setInput] = useState(''); // Text typed by the user in the input box
     const [messages, setMessages] = useState([
         // Initial welcome message from the bot
-        { text: "Hello! I'm your GECW Admission Assistant. How can I help you today? You can ask me about fees, hostels, or transport.", sender: 'bot' }
+        { text: "Hello! I'm your GECW Admission Assistant. How can I help you today? You can ask me about Admission, Fee Structure, Departments, Hostels, or Transport.", sender: 'bot' }
     ]);
     const [isTyping, setIsTyping] = useState(false); // Controls the visibility of the "typing..." animation
     const scrollRef = useRef(null); // Reference to the chat window for automatic scrolling
