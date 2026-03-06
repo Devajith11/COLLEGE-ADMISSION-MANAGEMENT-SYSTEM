@@ -139,10 +139,7 @@ const AdminDashboard = () => {
                     </div>
                     {/* Action Buttons Row */}
                     <div className="flex items-center gap-3">
-                        <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1e2532] border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-bold shadow-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-white">
-                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
-                            Export Register
-                        </button>
+
                         <button
                             onClick={fetchStudents}
                             className={`flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1e2532] border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-bold shadow-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-white ${loading ? 'opacity-50' : ''}`}
