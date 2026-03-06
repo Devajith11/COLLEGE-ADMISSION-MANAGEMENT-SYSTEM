@@ -3,24 +3,27 @@ const router = express.Router();
 const adminController = require('../controllers/adminController');
 const { adminAuth } = require('../middleware/auth');
 
-// @route   GET api/admin/students
-// @desc    Get all students (filtered by branch if applicable)
-// @access  Private/Admin
+/**
+ * Admin Routes
+ * Handles administrative actions like reviewing students, verifying documents, and updating status.
+ * All routes here are protected and require a valid 'Admission Clerk' or 'Super Admin' token.
+ */
+
+// 1. Fetch Students
+// Retrieves a list of all applicants. For departmental admins, results are filtered by their branch.
 router.get('/students', adminAuth, adminController.getStudents);
 
-// @route   POST api/admin/verify
-// @desc    Verify or Reject a student document
-// @access  Private/Admin
+// 2. Verify Document
+// Allows the admin to mark a specific uploaded file as 'Verified' or 'Rejected' with feedback.
 router.post('/verify', adminAuth, adminController.verifyDocument);
 
-// @route   POST api/admin/update-status
-// @desc    Update overall admission status of a student
-// @access  Private/Admin
+// 3. Update Admission Status
+// Changes the student's overall progress (e.g., from 'Registered' to 'Verified' or 'Admitted').
 router.post('/update-status', adminAuth, adminController.updateStatus);
 
-// @route   POST api/admin/update-remarks
-// @desc    Send general remarks/feedback to a student
-// @access  Private/Admin
+// 4. Send Remarks
+// Allows an admin to send a custom notification or general correction request to the student's dashboard.
 router.post('/update-remarks', adminAuth, adminController.updateRemarks);
 
 module.exports = router;
+

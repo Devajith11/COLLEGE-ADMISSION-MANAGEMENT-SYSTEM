@@ -3,43 +3,58 @@ import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 
+/**
+ * StudentDashboard Component
+ * The main landing page for students after they log in. 
+ * Shows their application status, admin feedback, and quick links.
+ */
 const StudentDashboard = () => {
     const navigate = useNavigate();
-    const [student, setStudent] = useState(null);
-    const [loading, setLoading] = useState(true);
 
+    // 1. State Management
+    const [student, setStudent] = useState(null); // Stores the logged-in student's full profile data
+    const [loading, setLoading] = useState(true); // Shows a spinner while fetching data
+
+    // 2. Data Fetching
     useEffect(() => {
         const fetchProfile = async () => {
             const token = localStorage.getItem('token');
+
+            // If no token exists, the user isn't logged in, redirect to login page
             if (!token) {
                 navigate('/login');
                 return;
             }
 
             try {
+                // Fetch the student's profile data from the backend
                 const res = await api.get('/student/profile');
                 setStudent(res.data);
             } catch (err) {
                 console.error('Fetch error:', err);
+                // If there's an authentication error (token expired or invalid), redirect to login
                 if (err.response?.status === 401) {
                     navigate('/login');
                 }
             } finally {
-                setLoading(false);
+                setLoading(false); // Stop showing the loading spinner
             }
         };
 
         fetchProfile();
     }, [navigate]);
 
+    // 3. Status Logic
+    // This helper determines which step the student is at in the admission process (0 to 3)
     const getStatusStep = () => {
         if (!student) return 0;
-        if (student.status === 'Admitted') return 3;
-        if (student.status === 'Verified') return 2;
-        if (student.personalDetails?.name) return 1;
-        return 0;
+        if (student.status === 'Admitted') return 3; // Final stage: Admitted
+        if (student.status === 'Verified') return 2; // Second stage: Documents verified by admin
+        if (student.personalDetails?.name) return 1; // First stage: Form details filled
+        return 0; // Initial stage: Just registered
     };
 
+    // Show a loading spinner if the data is still being fetched
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-background-dark">
@@ -51,7 +66,7 @@ const StudentDashboard = () => {
     return (
         <div className="min-h-[calc(100vh-160px)] bg-[#f8fafc] dark:bg-background-dark py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-5xl mx-auto">
-                {/* Header */}
+                {/* Dashboard Header: Shows welcome message and KEAM number */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                     <div>
                         <h1 className="text-3xl font-black text-[#111318] dark:text-white">
@@ -59,6 +74,7 @@ const StudentDashboard = () => {
                         </h1>
                         <p className="text-gray-500 font-medium">KEAM App No: <span className="text-primary font-bold">{student?.keamAppNumber}</span></p>
                     </div>
+                    {/* Bot & Logout actions */}
                     <div className="flex items-center gap-3">
                         <Link to="/chat" className="px-6 py-3 bg-white dark:bg-[#1e2532] border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-bold flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
                             <span className="material-symbols-outlined text-primary">smart_toy</span>
@@ -73,10 +89,11 @@ const StudentDashboard = () => {
                     </div>
                 </div>
 
-                {/* Status Tracker */}
+                {/* Status Tracker: Visual progress bar showing application stages */}
                 <div className="bg-white dark:bg-[#1e2532] rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-xl shadow-primary/5 mb-8">
                     <h2 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-8">Current Admission Status</h2>
                     <div className="relative flex items-center justify-between max-w-4xl mx-auto">
+                        {/* The gray/blue background line */}
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-100 dark:bg-gray-800 z-0">
                             <motion.div
                                 initial={{ width: 0 }}
@@ -84,6 +101,7 @@ const StudentDashboard = () => {
                                 className="h-full bg-primary"
                             />
                         </div>
+                        {/* Status circles (Form Filled, Verified, Admitted) */}
                         {[
                             { step: 1, label: 'Form Filled', icon: 'edit_document' },
                             { step: 2, label: 'Verified', icon: 'verified' },
@@ -99,8 +117,9 @@ const StudentDashboard = () => {
                     </div>
                 </div>
 
-                {/* Quick Actions Grid */}
+                {/* Quick Actions Grid: Links to Form, Uploads, and Bot */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Action Card: Application Form */}
                     <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-[#1e2532] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-lg group">
                         <div className="size-14 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                             <span className="material-symbols-outlined" style={{ fontSize: '30px' }}>fact_check</span>
@@ -113,6 +132,7 @@ const StudentDashboard = () => {
                         </Link>
                     </motion.div>
 
+                    {/* Action Card: Document Upload */}
                     <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-[#1e2532] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-lg group">
                         <div className="size-14 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                             <span className="material-symbols-outlined" style={{ fontSize: '30px' }}>upload_file</span>
@@ -125,6 +145,7 @@ const StudentDashboard = () => {
                         </Link>
                     </motion.div>
 
+                    {/* Action Card: Help Center / Bot */}
                     <motion.div whileHover={{ y: -5 }} className="bg-white dark:bg-[#1e2532] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-lg group">
                         <div className="size-14 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                             <span className="material-symbols-outlined" style={{ fontSize: '30px' }}>help_center</span>
@@ -138,7 +159,7 @@ const StudentDashboard = () => {
                     </motion.div>
                 </div>
 
-                {/* Feedback Section */}
+                {/* Feedback Section: Displayed only if admin has sent general remarks */}
                 {student?.adminRemarks && (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -158,7 +179,7 @@ const StudentDashboard = () => {
                     </motion.div>
                 )}
 
-                {/* Rejected Documents Section */}
+                {/* Rejected Documents Section: Shows which specific files were rejected and why */}
                 {student?.documents?.some(d => d.status === 'Rejected') && (
                     <div className="mt-8 space-y-4">
                         <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">Rejected Documents</h3>
@@ -179,7 +200,7 @@ const StudentDashboard = () => {
                     </div>
                 )}
 
-                {/* Info Note */}
+                {/* Info Note: General helpful info for the student */}
                 <div className="mt-8 p-6 bg-primary/5 rounded-3xl border border-primary/20 flex gap-4 items-start">
                     <span className="material-symbols-outlined text-primary">info</span>
                     <div>
@@ -195,3 +216,4 @@ const StudentDashboard = () => {
 };
 
 export default StudentDashboard;
+

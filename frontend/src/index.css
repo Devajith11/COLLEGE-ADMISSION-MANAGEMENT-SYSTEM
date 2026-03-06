@@ -1,12 +1,23 @@
 @import "tailwindcss";
 
+/* 
+  1. Font Imports 
+  Public Sans for clean typography and Material Symbols for icons.
+*/
 @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
+/* 
+  2. Theme Definition 
+  These are the global design tokens (colors, fonts, radius) used throughout the app.
+*/
 @theme {
   --color-primary: #144bb8;
+  /* Royal Blue - Main brand color */
   --color-secondary: #ffffff;
+  /* White */
   --color-accent: #2e7d32;
+  /* Success Green - Buttons/Actions */
   --color-background-light: #f6f6f8;
   --color-background-dark: #111621;
 
@@ -18,12 +29,18 @@
   --radius-full: 9999px;
 }
 
+/* 
+  3. Base Styles 
+  Default settings for HTML elements.
+*/
 @layer base {
   body {
+    /* Apply the global font and handle light/dark mode background colors */
     @apply font-display bg-background-light dark:bg-background-dark text-[#111318] dark:text-white;
     min-height: max(884px, 100dvh);
   }
 
+  /* Configuration for Material Icons */
   .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     display: inline-block;
@@ -31,7 +48,10 @@
   }
 }
 
-/* Custom scrollbar for better aesthetics */
+/* 
+  4. Custom Styling 
+  Enhancing the browser's default scrollbar with a modern look.
+*/
 ::-webkit-scrollbar {
   width: 8px;
 }

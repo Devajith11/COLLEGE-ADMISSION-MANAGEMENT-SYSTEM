@@ -1,23 +1,31 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+/**
+ * Home Component
+ * The entry point of the application. 
+ * Provides links to registration and separate logins for students/admins.
+ */
 const Home = () => {
     const navigate = useNavigate();
 
+    // 1. Automated Redirect Logic
+    // If the user lands here but is already logged in, send them straight to their dashboard.
     useEffect(() => {
         const token = localStorage.getItem('token');
         const user = JSON.parse(localStorage.getItem('user') || 'null');
         const admin = JSON.parse(localStorage.getItem('admin') || 'null');
 
         if (token) {
-            if (admin) navigate('/admin/dashboard');
-            else if (user) navigate('/dashboard');
+            if (admin) navigate('/admin/dashboard'); // Redirect admin users
+            else if (user) navigate('/dashboard');       // Redirect students
         }
     }, [navigate]);
 
     return (
         <div className="flex flex-col min-h-screen">
-            {/* Hero Section */}
+
+            {/* 2. Hero Section: Welcome message and portal branding */}
             <div className="@container">
                 <div className="@[480px]:px-4 @[480px]:py-3 pt-0 max-w-7xl mx-auto w-full">
                     <div
@@ -42,14 +50,14 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* Action Grid Section */}
+            {/* 3. Action Grid: Primary navigation tiles */}
             <div className="max-w-7xl mx-auto w-full px-4 sm:px-6">
                 <div className="pt-8 pb-4">
                     <h3 className="text-[#111318] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">Select Action</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-10">
-                    {/* Apply Online Card */}
+                    {/* Apply Online Card: For new students to register */}
                     <Link to="/register" className="flex flex-row md:flex-col gap-4 rounded-xl border border-accent/30 bg-white dark:bg-[#1e2532] dark:border-accent/20 p-6 items-center shadow-sm hover:shadow-xl transition-all group text-left md:text-center relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-1 h-full bg-accent md:w-full md:h-1"></div>
                         <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent group-hover:bg-accent group-hover:text-white transition-colors">
@@ -62,7 +70,7 @@ const Home = () => {
                         <span className="material-symbols-outlined ml-auto text-accent md:hidden">arrow_forward</span>
                     </Link>
 
-                    {/* Student Login Card */}
+                    {/* Student Login Card: For existing applicants to check status */}
                     <Link to="/login" className="flex flex-row md:flex-col gap-4 rounded-xl border border-[#dcdfe5] dark:border-[#2d3748] bg-white dark:bg-[#1e2532] p-6 items-center shadow-sm hover:shadow-xl transition-all group text-left md:text-center">
                         <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                             <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>school</span>
@@ -74,7 +82,7 @@ const Home = () => {
                         <span className="material-symbols-outlined ml-auto text-primary/60 md:hidden">arrow_forward</span>
                     </Link>
 
-                    {/* Admin Login Card */}
+                    {/* Admin Login Card: For staff members */}
                     <Link to="/admin/login" className="flex flex-row md:flex-col gap-4 rounded-xl border border-[#dcdfe5] dark:border-[#2d3748] bg-white dark:bg-[#1e2532] p-6 items-center shadow-sm hover:shadow-xl transition-all group text-left md:text-center">
                         <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#111318]/5 text-[#111318] dark:bg-white/10 dark:text-white group-hover:bg-[#111318] group-hover:text-white transition-colors">
                             <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>admin_panel_settings</span>
@@ -87,7 +95,7 @@ const Home = () => {
                     </Link>
                 </div>
 
-                {/* Important Information List */}
+                {/* 4. Support Links: PDFs, fees and schedules */}
                 <div className="pt-4 pb-2">
                     <h3 className="text-[#111318] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">Important Information</h3>
                 </div>
@@ -142,3 +150,4 @@ const Home = () => {
 };
 
 export default Home;
+

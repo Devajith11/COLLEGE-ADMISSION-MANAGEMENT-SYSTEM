@@ -1,49 +1,62 @@
+/**
+ * College Admission Management System - Backend Server
+ * This is the main entry point for the backend API.
+ */
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const dotenv = require('dotenv');
 
-// Load .env from the backend directory (works regardless of cwd)
+// 1. Configuration: Load environment variables (like Database URI, Port, Secrets)
+// We use path.join to ensure it finds the .env file correctly regardless of where the server is started from.
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-const authRoutes = require('./routes/authRoutes');
-const studentRoutes = require('./routes/studentRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const chatbotRoutes = require('./routes/chatbotRoutes');
-const connectDB = require('./config/db');
-const Admin = require('./models/Admin');
-const bcrypt = require('bcryptjs');
+// 2. Import Routes: These define the different API endpoints for our system
+const authRoutes = require('./routes/authRoutes');      // Login, Register, Logout
+const studentRoutes = require('./routes/studentRoutes');  // Admission form, document uploads
+const adminRoutes = require('./routes/adminRoutes');    // Admin dashboard, approving applications
+const chatbotRoutes = require('./routes/chatbotRoutes'); // Helpdesk chatbot responses
+const connectDB = require('./config/db');               // Database connection logic
+const Admin = require('./models/Admin');                // Admin user model
+const bcrypt = require('bcryptjs');                     // Tool for encrypting passwords
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5001; // The server will run on port 5001 or as defined in .env
 
-// Middleware
+// 3. Global Middlewares
+// CORS allows our frontend (usually on port 5173 or 3000) to talk to this backend
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Tells Express to automatically parse incoming JSON data from requests
 app.use(express.json());
+
+// Makes the 'uploads' folder public so the frontend can display uploaded documents/images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Request logging
+// Simple logger to see every request that hits the server in the terminal
 app.use((req, res, next) => {
     console.log(`📨 ${req.method} ${req.path}`);
     next();
 });
 
-// Root route
+// 4. API Route Definitions
+// Base route to check if server is alive
 app.get('/', (req, res) => {
-    res.send(' GECW Admission Management System API is running...');
+    res.send('🎓 GECW Admission Management System API is running...');
 });
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/student', studentRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/chatbot', chatbotRoutes);
+// Connect specific URL paths to their respective route handlers
+app.use('/api/auth', authRoutes);       // Example: http://localhost:5001/api/auth/login
+app.use('/api/student', studentRoutes); // Example: http://localhost:5001/api/student/apply
+app.use('/api/admin', adminRoutes);     // Example: http://localhost:5001/api/admin/stats
+app.use('/api/chatbot', chatbotRoutes); // Example: http://localhost:5001/api/chatbot/query
 
-// Debug endpoint to check uploaded files
+// 5. Debug Tool: Helper to see what files are currently in the uploads folder
 app.get('/api/debug/files', (req, res) => {
     const fs = require('fs');
     const uploadDir = path.join(__dirname, 'uploads');
@@ -55,13 +68,16 @@ app.get('/api/debug/files', (req, res) => {
     }
 });
 
-// Connect to Database and start server
+// 6. DB Connection & Server Bootup
+// We wrap this in an async function to wait for the database to connect before starting the web server.
 const startServer = async () => {
     try {
+        // Connect to MongoDB
         await connectDB();
 
-        // Seed/Update default admin
-        console.log('🔍 Checking for default admin...');
+        // Security: Create or update the default Administrator account
+        // Username: admin_gecw | Password: admin123
+        console.log('🔍 Checking for default admin configuration...');
         const hashedPassword = await bcrypt.hash('admin123', 10);
         await Admin.findOneAndUpdate(
             { username: 'admin_gecw' },
@@ -70,10 +86,11 @@ const startServer = async () => {
                 role: 'Admission Clerk',
                 branch: 'All'
             },
-            { upsert: true, new: true }
+            { upsert: true, new: true } // 'upsert' means create if it doesn't exist, update if it does.
         );
-        console.log('✅ Admin "admin_gecw" is ready with password "admin123"');
+        console.log('✅ Default Admin "admin_gecw" is ready (Password: admin123)');
 
+        // Finally, start listening for incoming connections
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
             console.log(`📡 API Base URL: http://localhost:${PORT}/api`);
@@ -83,4 +100,6 @@ const startServer = async () => {
     }
 };
 
+// Execute the startup process
 startServer();
+

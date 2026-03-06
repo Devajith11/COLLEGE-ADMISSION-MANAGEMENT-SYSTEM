@@ -3,13 +3,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
+/**
+ * AdmissionForm Component
+ * A multi-step form for students to submit their personal, guardian, academic, and category details.
+ */
 const AdmissionForm = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
-    const [initialLoading, setInitialLoading] = useState(true);
-    const [step, setStep] = useState(1);
+
+    // 1. State Management
+    const [loading, setLoading] = useState(false);        // Tracks if form is currently submitting
+    const [initialLoading, setInitialLoading] = useState(true); // Tracks if initial data is being fetched
+    const [step, setStep] = useState(1);                  // Tracks current form step (1 to 4)
+
+    // formData stores all the user input across all steps
     const [formData, setFormData] = useState({
-        // Step 1: Personal
+        // Step 1: Personal Details
         fullName: '',
         email: '',
         phone: '',
@@ -17,22 +25,23 @@ const AdmissionForm = () => {
         gender: '',
         bloodGroup: '',
         address: '',
-        // Step 2: Guardian
+        // Step 2: Guardian Details
         guardianName: '',
         relation: '',
         guardianPhone: '',
-        // Step 3: Academic
+        // Step 3: Academic Details (KEAM, Marks, etc.)
         keamRank: '',
         keamRollNo: '',
         plusTwoMarks: '',
         schoolName: '',
-        // Step 4: Reservation
+        // Step 4: Reservation & Branch Selection
         category: 'General',
         income: '',
         branch: 'CSE',
         reservation: 'None'
     });
 
+    // Configuration for the progress tracker at the top
     const steps = [
         { id: 1, title: 'Personal', icon: 'person' },
         { id: 2, title: 'Guardian', icon: 'family_restroom' },
@@ -40,11 +49,14 @@ const AdmissionForm = () => {
         { id: 4, title: 'Category', icon: 'fact_check' }
     ];
 
+    // 2. Fetch Existing Profile
+    // When the page loads, try to fetch any previously saved data for this student
     useEffect(() => {
         const fetchProfile = async () => {
             try {
                 const res = await api.get('/student/profile');
 
+                // If data exists in the database, pre-fill the form fields
                 if (res.data.personalDetails) {
                     setFormData(prev => ({
                         ...prev,
@@ -65,34 +77,41 @@ const AdmissionForm = () => {
                     }));
                 }
             } catch (err) {
-                console.error('Fetch error:', err);
+                console.error('Fetch profile error:', err);
                 if (err.response?.status === 403) {
+                    // Admins are not allowed to access this student-only form
                     alert('As an admin, you cannot access the student application form.');
                     navigate('/admin/dashboard');
                 } else if (err.response?.status === 401) {
+                    // Not logged in -> go to login page
                     navigate('/login');
                 }
-                // If 404, we let them fill the form from scratch
+                // If 404, it means the student has not started the form yet (which is fine)
             } finally {
-                setInitialLoading(false);
+                setInitialLoading(false); // Hide the global spinner
             }
         };
 
         fetchProfile();
     }, [navigate]);
 
+    // 3. Handlers
+    // Updates the state whenever a user types in any input field
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // Navigation between steps
     const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
     const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
+    // Final Submission: Sends the complete formData to the backend API
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
+            // Re-structure the data to match what the backend Expects (nested objects)
             const payload = {
                 personalDetails: {
                     name: formData.fullName,
@@ -116,8 +135,10 @@ const AdmissionForm = () => {
                 branch: formData.branch
             };
 
+            // Save/Update the data in the database
             await api.put('/student/update', payload);
 
+            // After successful save, redirect to the document upload page
             navigate('/upload');
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to save application');
@@ -126,6 +147,9 @@ const AdmissionForm = () => {
         }
     };
 
+    /**
+     * Renders different UI components based on the current 'step' value.
+     */
     const renderStep = () => {
         switch (step) {
             case 1:
@@ -331,6 +355,7 @@ const AdmissionForm = () => {
         }
     };
 
+    // If initial fetching is still active, show a global spinner
     if (initialLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-background-dark">
@@ -342,7 +367,7 @@ const AdmissionForm = () => {
     return (
         <div className="min-h-screen py-12 px-4 sm:px-6 bg-[#f8fafc] dark:bg-background-dark">
             <div className="max-w-4xl mx-auto">
-                {/* Progress Header */}
+                {/* Progress Header: Displays the current step icons and titles */}
                 <div className="mb-12">
                     <div className="flex items-center justify-between mb-8 overflow-x-auto pb-4 no-scrollbar">
                         {steps.map((s, idx) => (
@@ -369,15 +394,17 @@ const AdmissionForm = () => {
                     </div>
                 </div>
 
-                {/* Form Card */}
+                {/* Form Card Content */}
                 <div className="bg-white dark:bg-[#1e2532] rounded-3xl shadow-xl shadow-primary/5 border border-gray-100 dark:border-gray-800 overflow-hidden">
                     <div className="p-8 sm:p-12">
+                        {/* Smoothly switch between different steps using AnimatePresence */}
                         <AnimatePresence mode="wait">
                             {renderStep()}
                         </AnimatePresence>
 
-                        {/* Navigation Buttons */}
+                        {/* Navigation Buttons Row */}
                         <div className="flex items-center justify-between mt-12 pt-8 border-t border-gray-100 dark:border-gray-800">
+                            {/* Back Button (hidden on first step) */}
                             <button
                                 onClick={prevStep}
                                 disabled={step === 1}
@@ -388,6 +415,7 @@ const AdmissionForm = () => {
                                 Back
                             </button>
 
+                            {/* Continue or Submit Button */}
                             {step < 4 ? (
                                 <button
                                     onClick={nextStep}
@@ -399,17 +427,18 @@ const AdmissionForm = () => {
                             ) : (
                                 <button
                                     onClick={handleSubmit}
+                                    disabled={loading}
                                     className="flex items-center gap-2 bg-accent text-white px-10 py-3 rounded-xl font-bold hover:bg-accent/90 transition-all shadow-lg shadow-accent/20"
                                 >
-                                    Submit Application
-                                    <span className="material-symbols-outlined">check_circle</span>
+                                    {loading ? 'Saving...' : 'Submit Application'}
+                                    {!loading && <span className="material-symbols-outlined">check_circle</span>}
                                 </button>
                             )}
                         </div>
                     </div>
                 </div>
 
-                {/* Helper Footer */}
+                {/* Footer Section */}
                 <div className="mt-8 text-center text-sm text-gray-500">
                     <p>Need help? Contact college office at <span className="font-bold text-primary">04935 271 261</span> or use the <span className="underline cursor-pointer">Live Chatbot</span></p>
                 </div>
@@ -419,3 +448,4 @@ const AdmissionForm = () => {
 };
 
 export default AdmissionForm;
+

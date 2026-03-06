@@ -3,17 +3,25 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * AdminDashboard Component
+ * The central hub for college staff to review student applications and verify documents.
+ */
 const AdminDashboard = () => {
     const navigate = useNavigate();
-    const [selectedStudent, setSelectedStudent] = useState(null);
-    const [filter, setFilter] = useState('All');
-    const [students, setStudents] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [selectedDocIndex, setSelectedDocIndex] = useState(0);
-    const [remarks, setRemarks] = useState('');
-    const [docFeedback, setDocFeedback] = useState('');
 
+    // 1. State Management
+    const [selectedStudent, setSelectedStudent] = useState(null); // The student currently being reviewed in the modal
+    const [filter, setFilter] = useState('All');                  // Branch filter (CSE, ECE, etc.)
+    const [students, setStudents] = useState([]);                 // List of all students fetched from server
+    const [loading, setLoading] = useState(true);                 // Loading state for fetching data
+    const [error, setError] = useState(null);                     // Error state
+    const [selectedDocIndex, setSelectedDocIndex] = useState(0);  // Which document is currently visible in the previewer
+    const [remarks, setRemarks] = useState('');                 // Text for 'Message to Student'
+    const [docFeedback, setDocFeedback] = useState('');          // Text for specific document feedback
+
+    // 2. Data Fetching
+    // Fetches the list of all student applications from the backend
     const fetchStudents = async () => {
         try {
             setLoading(true);
@@ -28,20 +36,25 @@ const AdminDashboard = () => {
         }
     };
 
+    // Load data when the component first appears
     useEffect(() => {
         fetchStudents();
     }, []);
 
+    // 3. Handlers for Admin Actions
+
+    // Updates the overall application status (Verified, Admitted, Rejected)
     const handleVerifyStatus = async (studentId, status) => {
         try {
             await api.post('/admin/update-status', { studentId, status });
-            fetchStudents();
-            setSelectedStudent(null);
+            fetchStudents();       // Refresh the list after update
+            setSelectedStudent(null); // Close the review modal
         } catch (err) {
             alert('Failed to update status');
         }
     };
 
+    // Verifies or Rejects a specific document (like SSLC, TC)
     const handleVerifyDoc = async (studentId, documentId, status) => {
         try {
             await api.post('/admin/verify', {
@@ -50,7 +63,7 @@ const AdminDashboard = () => {
                 status,
                 adminFeedback: docFeedback
             });
-            // Update local state for the student's document
+            // Update local state immediately so the UI reflects the change without a full refresh
             setStudents(prev => prev.map(s => {
                 if (s._id === studentId) {
                     const updatedDocs = s.documents.map(d => d._id === documentId ? { ...d, status, adminFeedback: docFeedback } : d);
@@ -58,19 +71,20 @@ const AdminDashboard = () => {
                 }
                 return s;
             }));
-            // Also update selected student if open
+            // If the modal is currently open for this student, update its local data too
             if (selectedStudent?._id === studentId) {
                 setSelectedStudent(prev => ({
                     ...prev,
                     documents: prev.documents.map(d => d._id === documentId ? { ...d, status, adminFeedback: docFeedback } : d)
                 }));
             }
-            setDocFeedback('');
+            setDocFeedback(''); // Clear the feedback text box
         } catch (err) {
             alert('Failed to verify document');
         }
     };
 
+    // Sends a general remark to the student (e.g., "Please re-upload clearly")
     const handleSendRemarks = async () => {
         try {
             await api.post('/admin/update-remarks', {
@@ -84,6 +98,9 @@ const AdminDashboard = () => {
         }
     };
 
+    // 4. UI Helper Functions
+
+    // Calculate statistics for the top cards
     const stats = [
         { label: 'Total Applications', value: students.length, icon: 'groups', color: 'primary' },
         { label: 'Verified', value: students.filter(s => s.status === 'Verified').length, icon: 'check_circle', color: 'accent' },
@@ -91,12 +108,14 @@ const AdminDashboard = () => {
         { label: 'Admitted', value: students.filter(s => s.status === 'Admitted').length, icon: 'school', color: 'emerald-500' }
     ];
 
+    // Calculate seat filling progress for each branch
     const branchSummary = ['CSE', 'ECE', 'EEE', 'ME', 'CE'].map(b => ({
         name: b,
         filled: students.filter(s => s.branch === b && s.status === 'Admitted').length,
         capacity: 60
     }));
 
+    // Returns CSS classes for the status badges
     const getStatusStyle = (status) => {
         switch (status) {
             case 'Verified': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
@@ -109,7 +128,7 @@ const AdminDashboard = () => {
     return (
         <div className="min-h-screen bg-[#f8fafc] dark:bg-background-dark p-4 sm:p-8">
             <div className="max-w-7xl mx-auto">
-                {/* Header */}
+                {/* Dashboard Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-2xl font-bold text-[#111318] dark:text-white flex items-center gap-2">
@@ -118,6 +137,7 @@ const AdminDashboard = () => {
                         </h1>
                         <p className="text-sm text-gray-500">Government Engineering College Wayanad</p>
                     </div>
+                    {/* Action Buttons Row */}
                     <div className="flex items-center gap-3">
                         <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1e2532] border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-bold shadow-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-white">
                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
@@ -131,14 +151,10 @@ const AdminDashboard = () => {
                             <span className={`material-symbols-outlined ${loading ? 'animate-spin' : ''}`} style={{ fontSize: '18px' }}>refresh</span>
                             Refresh
                         </button>
-                        <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
-                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-                            Spot Admission
-                        </button>
                     </div>
                 </div>
 
-                {/* Stats Grid */}
+                {/* Stats Grid: Displays summary of applications */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     {stats.map((stat, idx) => (
                         <div key={idx} className="bg-white dark:bg-[#1e2532] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
@@ -151,7 +167,7 @@ const AdminDashboard = () => {
                     ))}
                 </div>
 
-                {/* Branch Seat Tracker */}
+                {/* Branch Seat Tracker: Visual representation of seat availability */}
                 <div className="bg-white dark:bg-[#1e2532] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm mb-8">
                     <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 uppercase tracking-wider">Branch Seat Filling</h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
@@ -172,8 +188,9 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
-                {/* Applications Table */}
+                {/* Applications Table: List of all students with filtering */}
                 <div className="bg-white dark:bg-[#1e2532] rounded-3xl border border-gray-100 dark:border-gray-800 shadow-xl overflow-hidden">
+                    {/* Filter & Search Bar */}
                     <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div className="relative w-full sm:w-64">
                             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style={{ fontSize: '20px' }}>search</span>
@@ -197,6 +214,7 @@ const AdminDashboard = () => {
                         </div>
                     </div>
 
+                    {/* Main Table Content */}
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -238,7 +256,7 @@ const AdminDashboard = () => {
                                             <button
                                                 onClick={() => {
                                                     setSelectedStudent(student);
-                                                    setSelectedDocIndex(0);
+                                                    setSelectedDocIndex(0); // Reset doc viewer to first doc
                                                 }}
                                                 className="px-4 py-2 bg-white dark:bg-[#1e2532] border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-bold hover:bg-primary hover:border-primary hover:text-white transition-all shadow-sm flex items-center gap-2 ml-auto"
                                             >
@@ -254,10 +272,11 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            {/* Sidebar Review Modal */}
+            {/* Application Review Overlay (Full screen modal) */}
             <AnimatePresence>
                 {selectedStudent && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        {/* Background Overlay */}
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -265,12 +284,14 @@ const AdminDashboard = () => {
                             onClick={() => setSelectedStudent(null)}
                             className="absolute inset-0 bg-background-dark/80 backdrop-blur-sm"
                         />
+                        {/* Modal Box */}
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             className="relative w-full max-w-6xl h-[90vh] bg-white dark:bg-[#1e2532] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-gray-100 dark:border-gray-800"
                         >
+                            {/* Modal Header */}
                             <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-primary text-white">
                                 <div className="flex items-center gap-4">
                                     <div className="size-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -290,11 +311,12 @@ const AdminDashboard = () => {
                             </div>
 
                             <div className="flex-grow flex flex-col lg:flex-row overflow-hidden">
-                                {/* Left Side: Student Info */}
+                                {/* Left Sidebar: Detailed Student Info */}
                                 <div className="w-full lg:w-1/3 overflow-y-auto p-6 bg-[#f8fafc] dark:bg-black/20 border-r border-gray-100 dark:border-gray-800">
                                     <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-6">Student Information</h3>
 
                                     <div className="space-y-6">
+                                        {/* Branch & Category Summary */}
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="bg-primary/10 p-3 rounded-2xl border border-primary/20">
                                                 <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Allotted Branch</p>
@@ -306,6 +328,7 @@ const AdminDashboard = () => {
                                             </div>
                                         </div>
 
+                                        {/* Personal & Guardian Info Sections */}
                                         <div className="space-y-4">
                                             <div className="px-1">
                                                 <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -332,33 +355,10 @@ const AdminDashboard = () => {
                                                             <p className="text-sm font-black text-[#111318] dark:text-white">{selectedStudent.personalDetails?.email || 'N/A'}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="size-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                                                            <span className="material-symbols-outlined">cake</span>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-[10px] font-bold text-gray-400 uppercase">Date of Birth</p>
-                                                            <p className="text-sm font-black text-[#111318] dark:text-white">{new Date(selectedStudent.personalDetails?.dob).toLocaleDateString() || 'N/A'}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-gray-800">
-                                                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Address</p>
-                                                        <p className="text-xs text-gray-600 dark:text-gray-300 font-medium leading-relaxed">{selectedStudent.personalDetails?.address || 'No address provided'}</p>
-                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <div className="bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10">
-                                                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-3">Guardian Information</p>
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <p className="text-base font-black text-[#111318] dark:text-white">{selectedStudent.guardianDetails?.name}</p>
-                                                        <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">{selectedStudent.guardianDetails?.relation}</p>
-                                                    </div>
-                                                    <p className="text-sm font-black text-[#111318] dark:text-white">{selectedStudent.guardianDetails?.phone}</p>
-                                                </div>
-                                            </div>
-
+                                            {/* Academic Merit Highlights */}
                                             <div className="bg-primary p-5 rounded-2xl shadow-xl shadow-primary/10 text-white">
                                                 <p className="text-[10px] font-black uppercase tracking-widest mb-4 opacity-70">Academic Merit</p>
                                                 <div className="grid grid-cols-2 gap-6">
@@ -371,13 +371,10 @@ const AdminDashboard = () => {
                                                         <p className="text-2xl font-black">{selectedStudent.academicDetails?.plusTwoMarks || 'N/A'}%</p>
                                                     </div>
                                                 </div>
-                                                <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
-                                                    <span className="text-[10px] font-bold uppercase opacity-60 text-white/80">KEAM Roll No</span>
-                                                    <span className="text-sm font-black">{selectedStudent.academicDetails?.keamRollNo}</span>
-                                                </div>
                                             </div>
                                         </div>
 
+                                        {/* Action Section: Remarks and Status Updates */}
                                         <div className="p-4 bg-white dark:bg-[#1e2532] rounded-xl border border-gray-200 dark:border-gray-800">
                                             <p className="text-[10px] font-bold text-gray-500 uppercase mb-4">Message to Student</p>
                                             <textarea
@@ -394,18 +391,7 @@ const AdminDashboard = () => {
                                             </button>
                                         </div>
 
-                                        <div className="p-4 bg-white dark:bg-[#1e2532] rounded-xl border border-gray-200 dark:border-gray-800">
-                                            <p className="text-[10px] font-bold text-gray-500 uppercase mb-4">Verification Checklist</p>
-                                            <div className="space-y-3">
-                                                {['Name matches SSLC', 'Allotment memo valid', 'Transfer Certificate original', 'Income certificate below limit'].map((check, idx) => (
-                                                    <label key={idx} className="flex items-center gap-3 cursor-pointer group">
-                                                        <input type="checkbox" className="size-4 rounded border-gray-300 text-primary focus:ring-primary" />
-                                                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-primary transition-colors">{check}</span>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </div>
-
+                                        {/* Status Buttons */}
                                         <div className="space-y-3">
                                             <button
                                                 onClick={() => handleVerifyStatus(selectedStudent._id, 'Verified')}
@@ -432,10 +418,12 @@ const AdminDashboard = () => {
                                     </div>
                                 </div>
 
+                                {/* Right Content: Document Previewer */}
                                 <div className="flex-grow overflow-hidden flex flex-col">
                                     <div className="p-4 bg-white dark:bg-[#1e2532] border-b border-gray-100 dark:border-gray-800 flex items-center gap-4">
                                         <span className="text-xs font-bold text-gray-400 px-2 tracking-widest uppercase">Document Viewer</span>
                                         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                                            {/* Tab for each document */}
                                             {selectedStudent.documents.map((doc, idx) => (
                                                 <button
                                                     key={doc._id}
@@ -460,20 +448,12 @@ const AdminDashboard = () => {
                                             <>
                                                 <div className="w-full mb-4 flex justify-between items-center px-2">
                                                     <span className="text-xs font-bold text-gray-500 uppercase">File: {selectedStudent.documents[selectedDocIndex].name}</span>
-                                                    <a
-                                                        href={`${import.meta.env.VITE_API_URL || 'https://college-admission-management-system.onrender.com'}${selectedStudent.documents[selectedDocIndex].url}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-xs text-primary font-bold hover:underline flex items-center gap-1"
-                                                    >
-                                                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>open_in_new</span>
-                                                        View Original File
-                                                    </a>
                                                 </div>
+                                                {/* The actual File Preview */}
                                                 <div className="w-full max-w-2xl bg-white dark:bg-[#1e2532] shadow-2xl rounded-lg p-2 min-h-[600px] flex items-center justify-center border border-gray-200 dark:border-gray-800 mb-6 overflow-hidden">
                                                     {selectedStudent.documents[selectedDocIndex].url.toLowerCase().endsWith('.pdf') ? (
                                                         <iframe
-                                                            src={`${import.meta.env.VITE_API_URL || 'https://college-admission-management-system.onrender.com'}${selectedStudent.documents[selectedDocIndex].url}#toolbar=0`}
+                                                            src={`${api.defaults.baseURL.replace('/api', '')}${selectedStudent.documents[selectedDocIndex].url}#toolbar=0`}
                                                             width="100%"
                                                             height="600px"
                                                             className="rounded border-none"
@@ -481,18 +461,14 @@ const AdminDashboard = () => {
                                                         />
                                                     ) : (
                                                         <img
-                                                            src={`${import.meta.env.VITE_API_URL || 'https://college-admission-management-system.onrender.com'}${selectedStudent.documents[selectedDocIndex].url}`}
+                                                            src={`${api.defaults.baseURL.replace('/api', '')}${selectedStudent.documents[selectedDocIndex].url}`}
                                                             alt="Document Preview"
                                                             className="max-w-full h-auto rounded"
-                                                            onLoad={() => console.log("Loaded:", `${import.meta.env.VITE_API_URL || 'https://college-admission-management-system.onrender.com'}${selectedStudent.documents[selectedDocIndex].url}`)}
-                                                            onError={(e) => {
-                                                                console.error("Image load failed for URL:", `${import.meta.env.VITE_API_URL || 'https://college-admission-management-system.onrender.com'}${selectedStudent.documents[selectedDocIndex].url}`);
-                                                                e.target.src = "https://placehold.co/600x400?text=Image+Not+Found+on+Server";
-                                                            }}
                                                         />
                                                     )}
                                                 </div>
-                                                <div className="w-full max-w-2xl flex flex-col gap-4">
+                                                {/* Document Approval/Rejection controls */}
+                                                <div className="w-full max-w-2xl flex flex-col gap-4 pb-12">
                                                     <textarea
                                                         className="w-full bg-white dark:bg-[#1e2532] border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-xs focus:ring-2 focus:ring-primary outline-none"
                                                         placeholder="Add specific feedback for this document (optional)..."
@@ -533,3 +509,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

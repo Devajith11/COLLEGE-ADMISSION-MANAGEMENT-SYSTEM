@@ -3,66 +3,93 @@ import { motion } from 'framer-motion';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * Auth Component
+ * Handles Student Login, Student Registration, and Admin Login based on props.
+ * @param {boolean} isRegister - If true, shows registration form.
+ * @param {boolean} isAdmin - If true, shows admin login form.
+ */
 const Auth = ({ isRegister, isAdmin }) => {
+    // 1. State Management
+    // formData holds the values typed into the input fields
     const [formData, setFormData] = useState({ keamAppNumber: '', password: '', username: '' });
+    // error stores any error messages from the server to display to the user
     const [error, setError] = useState('');
+    // loading tracks if a network request is in progress to show a spinner
     const [loading, setLoading] = useState(false);
+
     const navigate = useNavigate();
 
+    // 2. Form Submission Handler
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+        e.preventDefault(); // Prevents the page from refreshing on submit
+        setError('');       // Reset previous errors
+        setLoading(true);   // Start loading state
 
         try {
             let endpoint = '';
             let payload = {};
 
+            // Decide which API endpoint to hit based on the mode (Admin, Register, or Login)
             if (isAdmin) {
                 endpoint = '/auth/admin/login';
                 payload = { username: formData.username, password: formData.password };
             } else {
+                // For students, use register or login endpoint
                 endpoint = isRegister ? '/auth/register' : '/auth/login';
                 payload = { keamAppNumber: formData.keamAppNumber, password: formData.password };
             }
 
+            // Send request to the backend
             const res = await api.post(endpoint, payload);
 
+            // 3. Successful Authentication Logic
+            // Save the security token to localStorage so user stays logged in
             localStorage.setItem('token', res.data.token);
+
             if (isAdmin) {
+                // If Admin, save admin details and redirect to Admin Dashboard
                 localStorage.setItem('admin', JSON.stringify(res.data.admin));
-                window.dispatchEvent(new Event('authChange'));
+                window.dispatchEvent(new Event('authChange')); // Notify Navbar/App of login
                 navigate('/admin/dashboard');
             } else {
+                // If Student, save student details and redirect appropriately
                 localStorage.setItem('user', JSON.stringify(res.data.student));
                 window.dispatchEvent(new Event('authChange'));
-                // Redirect to form if registering, otherwise go to dashboard
+
+                // If they just registered, take them to the Admission Form page
                 if (isRegister) {
                     navigate('/apply');
                 } else {
+                    // If they just logged in, take them to their status Dashboard
                     navigate('/dashboard');
                 }
             }
         } catch (err) {
+            // 4. Error Handling
             console.error('Auth Error:', err);
             if (!err.response) {
-                setError(`Cannot connect to server at ${api.defaults.baseURL}. Please ensure the backend is running and CORS is allowed.`);
+                // Server might be down or not reachable
+                setError(`Cannot connect to server at ${api.defaults.baseURL}. Please ensure the backend is running.`);
             } else {
+                // Display the specific error message from the backend (e.g., "Wrong password")
                 setError(err.response.data?.message || 'Authentication failed. Please check your credentials.');
             }
         } finally {
-            setLoading(false);
+            setLoading(false); // Stop loading state regardless of success or failure
         }
     };
 
     return (
         <div className="min-h-[calc(100vh-160px)] flex items-center justify-center p-4 bg-[#f8fafc] dark:bg-background-dark">
+            {/* motion.div adds a smooth fade-in animation */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full max-w-md bg-white dark:bg-[#1e2532] rounded-3xl shadow-xl shadow-primary/10 border border-gray-100 dark:border-gray-800 overflow-hidden"
             >
                 <div className="p-8 sm:p-10">
+                    {/* Header Section */}
                     <div className="flex flex-col items-center mb-8">
                         <div className={`size-16 rounded-2xl flex items-center justify-center mb-4 ${isAdmin ? 'bg-background-dark text-white' : 'bg-primary/10 text-primary'
                             }`}>
@@ -78,6 +105,7 @@ const Auth = ({ isRegister, isAdmin }) => {
                         </p>
                     </div>
 
+                    {/* Error Display Area */}
                     {error && (
                         <motion.div
                             initial={{ opacity: 0, height: 0 }}
@@ -89,8 +117,10 @@ const Auth = ({ isRegister, isAdmin }) => {
                         </motion.div>
                     )}
 
+                    {/* Authentication Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {!isAdmin ? (
+                            // Student Input: KEAM Application Number
                             <div className="space-y-2">
                                 <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">KEAM App Number</label>
                                 <div className="relative">
@@ -106,6 +136,7 @@ const Auth = ({ isRegister, isAdmin }) => {
                                 </div>
                             </div>
                         ) : (
+                            // Admin Input: Username
                             <div className="space-y-2">
                                 <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Admin Username</label>
                                 <div className="relative">
@@ -122,6 +153,7 @@ const Auth = ({ isRegister, isAdmin }) => {
                             </div>
                         )}
 
+                        {/* Common Input: Password */}
                         <div className="space-y-2">
                             <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-1">Password</label>
                             <div className="relative">
@@ -137,6 +169,7 @@ const Auth = ({ isRegister, isAdmin }) => {
                             </div>
                         </div>
 
+                        {/* Submit Button */}
                         <button
                             type="submit"
                             disabled={loading}
@@ -156,6 +189,7 @@ const Auth = ({ isRegister, isAdmin }) => {
                         </button>
                     </form>
 
+                    {/* Footer Toggle (Register <-> Login) */}
                     <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 text-center">
                         {!isAdmin ? (
                             <p className="text-sm text-gray-500 font-medium">
@@ -183,3 +217,4 @@ const Auth = ({ isRegister, isAdmin }) => {
 };
 
 export default Auth;
+
